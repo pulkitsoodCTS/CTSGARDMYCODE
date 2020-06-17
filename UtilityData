@@ -1,0 +1,32 @@
+public class UtilityData{
+    //Job Identifiers
+    public String jobName;//caseInsensitive; format - "#sObjectApiName-jobDescription", e.g. #Account-EmailMasking or #object__c-FlagMasking
+    
+    //Job-specific fields
+    public String maskEmailId;
+    public Integer batchSize;
+    
+    //Default fields
+    private String defaultMaskEmailId = 'defaultMaskingEmail@example.com';
+    
+    //Constructor to initialize with default values - prevents null exception
+    public UtilityData(){
+        batchSize = 200;
+        maskEmailId = defaultMaskEmailId;
+    }
+    
+    //if atleast minimal data is given to run a Job
+    public Boolean isValid(){
+        String validRegEx = '([\\s]*#[a-zA-Z0-9]+(_[a-zA-Z0-9]+)*(__[cC])?-[a-zA-Z]+#[\\s]*)+';
+        Pattern validJobNamePattern = Pattern.compile(validRegEx);
+        Matcher jobNameMatcher = validJobNamePattern.matcher(jobName);
+        return jobNameMatcher.matches();
+    }
+    
+    /* Documentation : UtilityData
+    Valid jobNames(caseInsensitive):
+		- #account-emailMasking#
+		- #contact-emailMasking#
+		- #case-emailMasking#
+    */
+}

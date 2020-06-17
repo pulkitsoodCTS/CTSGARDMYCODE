@@ -1,0 +1,477 @@
+//V6 : PostRefreshUpdateBatch FrameWork included. Classes : PostRefreshUpdateBatch, PostRefreshUpdateBatchHelper and UtilityData
+//V5 : minor changes regarding new values of email and endpoints
+//V4 : updateGardTeamsEmails() and refreshGCsInUsers() added
+//V3 : createRelatedGardContacts added
+public without sharing Class AutomatePostRefreshSteps{
+    //public static variables
+    public static String maskEmailId = 'defaultMaskingEmail@example.com';//'ownergard@gmail.com';
+    
+    /*See PostRefreshUpdateBatch
+    //Masks production Email Ids in Contacts
+    public static void updateContactEmails(){
+        List<Contact> contactLst1stBatch = new List<Contact>();
+        List<Contact> contactLst2ndBatch = new List<Contact>();
+        List<Contact> contactLst3rdBatch = new List<Contact>();
+        List<Contact> contactLst4thBatch = new List<Contact>();
+        Integer i = 0;
+        for(Contact contactIns : [Select id, Email,Email_1__c,Email_2__c,Email_3__c,Email_4__c,Email_5__c FROM Contact]){
+            if(contactIns.Email != null || contactIns.Email != '')
+                contactIns.Email = 'example'+contactIns.Email;
+            if(contactIns.Email_1__c != null || contactIns.Email_1__c != '')
+                contactIns.Email_1__c = 'example'+contactIns.Email_1__c;
+            if(contactIns.Email_2__c != null || contactIns.Email_2__c != '')
+                contactIns.Email_2__c = 'example'+contactIns.Email_2__c;
+            if(contactIns.Email_3__c != null || contactIns.Email_3__c != '')
+                contactIns.Email_3__c = 'example'+contactIns.Email_3__c;
+            if(contactIns.Email_4__c != null || contactIns.Email_4__c != '')
+                contactIns.Email_4__c = 'example'+contactIns.Email_4__c;
+            if(contactIns.Email_5__c != null || contactIns.Email_5__c != '')
+                contactIns.Email_5__c = 'example'+contactIns.Email_5__c;
+            if(i<10000)
+                contactLst1stBatch.add(contactIns);
+            if(i> = 10000 && i<20000)
+                contactLst2ndBatch.add(contactIns);
+            if(i> = 20000 && i<30000)
+                contactLst3rdBatch.add(contactIns);
+            if(i> = 30000 && i<40000)
+                contactLst4thBatch.add(contactIns);
+        }
+        if(!Test.isRunningTest()){
+            if(contactLst1stBatch.size() > 0)
+                update contactLst1stBatch;
+            if(contactLst2ndBatch.size() > 0)
+                update contactLst2ndBatch;
+            if(contactLst3rdBatch.size() > 0)
+                update contactLst3rdBatch;
+            if(contactLst4thBatch.size() > 0)
+                update contactLst4thBatch;
+        }
+        contactLst1stBatch.clear();
+        contactLst2ndBatch.clear();
+        contactLst3rdBatch.clear();
+        contactLst4thBatch.clear();
+    }
+    */
+    
+    //Masks production emails in Account
+    /*See PostRefreshUpdateBatch
+    public static void updateAccountEmails(){
+        List<Account> accountLst1stBatch = new List<Account>();
+        List<Account> accountLst2ndBatch = new List<Account>();
+        List<Account> accountLst3rdBatch = new List<Account>();
+        Integer i = 0;
+        for(Account accountIns : [Select id, Email_1__c,Email_Address_2__c FROM Account]){
+            if(accountIns.Email_Address_2__c != null || accountIns.Email_Address_2__c != '')
+                accountIns.Email_Address_2__c = 'example'+accountIns.Email_Address_2__c;
+            if(accountIns.Email_1__c != null || accountIns.Email_1__c != '')
+                accountIns.Email_1__c = 'example'+accountIns.Email_1__c;
+            
+            if(i < 10000) accountLst1stBatch.add(accountIns);
+            else if(i < 20000) accountLst2ndBatch.add(accountIns);
+            else if(i < 30000) accountLst3rdBatch.add(accountIns);
+        }
+        if(!Test.isRunningTest()){
+            if(accountLst1stBatch.size() > 0)
+                update accountLst1stBatch;
+            if(accountLst2ndBatch.size() > 0)
+                update accountLst2ndBatch;
+            if(accountLst3rdBatch.size() > 0)
+                update accountLst3rdBatch;   
+        }
+    }
+    */    
+	//Updates gardTeam emails
+    public static void updateGardTeamsEmails(){
+        List<Gard_Team__c> grdTeamsToBeMasked = new List<Gard_Team__c>();
+        Integer i = 0;
+        for(Gard_Team__c grdTeamIns : [SELECT id,P_I_email__c,Marine_Email__c FROM Gard_Team__c]){
+                if(grdTeamIns.P_I_email__c != null)grdTeamIns.P_I_email__c = maskEmailId;//'example-'+grdTeamIns.P_I_email__c;
+				if(grdTeamIns.Marine_Email__c != null)grdTeamIns.Marine_Email__c = maskEmailId;//'example-'+grdTeamIns.Marine_Email__c;
+                grdTeamsToBeMasked.add(grdTeamIns);
+                i++;
+                if(i == 10000) break;
+        }
+        if(!Test.isRunningTest() && grdTeamsToBeMasked.size() > 0)
+            update grdTeamsToBeMasked;
+    }
+	/*See PostRefreshUpdateBatch
+    //Update all case emails which don't have claim record type
+    public static void updateCaseEmails(){
+        List<RecordType> recordTypeLst;
+        List<Case> caseLst1stBatch = new List<Case>();
+        String claimRecordTypeId;
+        Integer i = 0;
+        
+        recordTypeLst = [SELECT Id FROM RecordType WHERE Name = 'claim'];
+        if(recordTypeLst != null && recordTypeLst.size() >0)
+            claimRecordTypeId = recordTypeLst[0].id;
+        
+        for(Case caseIns : [SELECT suppliedEmail,Claim_Submitter_Email__c FROM Case WHERE RecordTypeId !=: claimRecordTypeId]){
+            if(caseIns.suppliedEmail != null || caseIns.suppliedEmail != '')
+                caseIns.suppliedEmail = 'example'+caseIns.suppliedEmail;
+            if(caseIns.Claim_Submitter_Email__c != null || caseIns.Claim_Submitter_Email__c != '')
+                caseIns.Claim_Submitter_Email__c = 'example'+caseIns.Claim_Submitter_Email__c;
+            caseLst1stBatch.add(caseIns); 
+            i++;
+            if(i == 10000) 
+                break;
+        }
+        if(!Test.isRunningTest() && caseLst1stBatch.size() > 0)
+            update caseLst1stBatch;
+    }
+    */
+    
+    //For every Queue where there is exits a Queue email address, it replaces the email address
+    public static void updateQueueEmails(){
+        List<Group> queueLst = new List<Group>();
+        String emailToBeSet = maskEmailId;
+        for(Group queue : [SELECT id,name,email FROM Group WHERE Type = 'Queue']){
+            if(queue.email != null)queue.email = emailToBeSet;
+            queueLst.add(queue);
+        }
+        update queueLst;
+    }
+    
+    //Mask Custom Settings with Dummy/Development Environment's values
+    public static void updateCustomSettings(){
+        //Settings' Masking STARTS
+        //BlueCardTeam
+        Map<String,BlueCardTeam__c> blueCardTeamMap = BlueCardTeam__c.getAll();
+        for(String dataSetName : blueCardTeamMap.keySet()){
+            BlueCardTeam__c blueCardTeam = blueCardTeamMap.get(dataSetName);
+            blueCardTeam.Value__c = maskEmailId;
+        }
+        
+        //BlueCard_And_ViewDoc_webservice_endpoint
+        Map<String,BlueCard_webservice_endpoint__c> blueCardWebserviceEndpointMap = BlueCard_webservice_endpoint__c.getAll();
+        for(String dataSetName : blueCardWebserviceEndpointMap.keySet()){
+            BlueCard_webservice_endpoint__c blueCardWebserviceEndpoint = blueCardWebserviceEndpointMap.get(dataSetName);
+            blueCardWebserviceEndpoint.Endpoint__c = 'https://soa-test.gard.no/soa-infra/services/Documents/DocumentFetcher/GetDocumentService_ep';
+        }
+        
+        //Claim Admin Email
+        Map<String,Claim_Admin_Email__c> claimAdminEmailMap = Claim_Admin_Email__c.getAll();
+        for(String dataSetName : claimAdminEmailMap.keySet()){
+            Claim_Admin_Email__c thisClaimAdminEmail = claimAdminEmailMap.get(dataSetName);
+            thisClaimAdminEmail.Email_Address__c = 'claimtest@gard.no';
+        }
+        
+        //Claim Timebar Webservice Endpoint
+        Map<String,Claim_Timebar_Webservice_Endpoint__c> claimTimebarWebserviceEndpointMap = Claim_Timebar_Webservice_Endpoint__c.getAll();
+        for(String dataSetName : claimTimebarWebserviceEndpointMap.keySet()){
+            Claim_Timebar_Webservice_Endpoint__c claimTimebarWebserviceEndpoint = claimTimebarWebserviceEndpointMap.get(dataSetName);
+            claimTimebarWebserviceEndpoint.ClientId__c = 'a7714024342840b38fbea219de4ba7eb';
+            claimTimebarWebserviceEndpoint.ClientSecret__c = 'C1D611EF7Ec44c819dE7c476a2787B85';
+            claimTimebarWebserviceEndpoint.Endpoint__c = 'https://gard-el-gard-test.eu.cloudhub.io/api/timebars?clients=';
+        }
+        
+        //Claims Webservice Endpoint
+        Map<String,Claim_webservice_Endpoint__c> claimWebServiceEndpointMap = Claim_webservice_Endpoint__c.getAll();
+        String claimWebServiceEndpoint;
+        for(String dataSetName : claimWebServiceEndpointMap.keyset()){
+            Claim_webservice_Endpoint__c thisClaimWebServiceEndpoint = claimWebServiceEndpointMap.get(dataSetName);
+            if(claimWebServiceEndpoint == null){
+                claimWebServiceEndpoint = thisClaimWebServiceEndpoint.Endpoint__c.replace('soa','soa-test').replace('gard','gard-test');//thisClaimWebServiceEndpoint.Endpoint__c.replace('soa.gard.no','soa-test.gard.no');
+                claimWebServiceEndpoint = claimWebServiceEndpoint.replace('ClaimHandling','claimshandler');
+            }
+            thisClaimWebserviceEndpoint.Endpoint__c = claimWebServiceEndpoint;
+        }
+        
+        //Common Variables
+        Map<String,CommonVariables__c> commonVariablesMap = CommonVariables__c.getAll();
+        for(String dataSetName : commonVariablesMap.keySet()){
+            CommonVariables__c commonVariables = commonVariablesMap.get(dataSetName);
+            if(commonVariables.Name == 'DefaultProfilePic') commonVariables.Value__c = '/mygard/profilephoto/005/T';
+            else if(commonVariables.Name == 'ReplyToMailId') commonVariables.Value__c = 'no-reply@gard-test.no';
+        }
+        
+        //Contract Review Default Claim Email
+        Map<String,Contract_Review_Default_Claim_Email__c> contractReviewDefaultClaimEmailMap = Contract_Review_Default_Claim_Email__c.getAll();
+        for(String dataSetName : contractReviewDefaultClaimEmailMap.keySet()){
+            Contract_Review_Default_Claim_Email__c thisContractReviewDefaultClaimEmail = contractReviewDefaultClaimEmailMap.get(dataSetName);
+            thisContractReviewDefaultClaimEmail.Email__c = maskEmailId;
+        }        
+        
+        //ContractReviewWebServices
+        Map<String,ContractReviewWebServices__c> contractReviewWebServicesMap = ContractReviewWebServices__c.getAll();
+        String CRWSEndpoint;
+        for(String dataSetName : contractReviewWebServicesMap.keySet()){
+            ContractReviewWebServices__c thisContractReviewWebServices = contractReviewWebServicesMap.get(dataSetName);
+            if(CRWSEndpoint == null)CRWSEndpoint = thisContractReviewWebServices.Endpoint__c.replace('gard','gard-test');//thisContractReviewWebServices.Endpoint__c.replace('soa.gard.no','soa-test.gard.no');
+            thisContractReviewWebServices.Endpoint__c = CRWSEndpoint;
+        }
+        
+        //Customer feedback Email Recipient
+        Customer_feedback_Email_Recipient__c customerFeedbackEmailRecipientOWD = Customer_feedback_Email_Recipient__c.getOrgDefaults();//.getAll();
+        customerFeedbackEmailRecipientOWD.Complaint__c = maskEmailId;
+        
+        //Customer Transactions Chart and Traders
+        Map<String,Customer_Transactions_Chart_Traders__c> customerTransactionsChartTradersMap = Customer_Transactions_Chart_Traders__c.getAll();
+        for(String dataSetName : customerTransactionsChartTradersMap.keySet()){
+            Customer_Transactions_Chart_Traders__c customerTransactionsChartTraders = customerTransactionsChartTradersMap.get(dataSetName);
+            customerTransactionsChartTraders.Charters_Charterers_and_Traders_Email__c = '';            
+        }
+        
+        //Default Emails Ids
+        Map<String,Default_Emails__c> defaultEmailsCSMap = Default_Emails__c.getAll();
+        for(String dataSetName : defaultEmailsCSMap.keySet()){
+            Default_Emails__c defaultEmailsCS = defaultEmailsCSMap.get(dataSetName);
+            defaultEmailsCS.Email_Id__c = maskEmailId;
+        }         
+        
+        //Email Id for COFR Request
+        Map<String,COFR_Request_Email_CS__c> cofrRequestEmailCSMap = COFR_Request_Email_CS__c.getAll();
+        for(String dataSetName : cofrRequestEmailCSMap.keySet()){
+            COFR_Request_Email_CS__c cofrRequestEmailCS = cofrRequestEmailCSMap.get(dataSetName);
+            cofrRequestEmailCS.Value__c = maskEmailId;
+        } 
+        
+        //Email Settings
+        Map<String,EmailSettings__c> emailSettingsMap = EmailSettings__c.getAll();
+        for(String dataSetName : emailSettingsMap.keySet()){
+            EmailSettings__c emailSettings = emailSettingsMap.get(dataSetName);
+            emailSettings.Attachment_BCC_Service__c = maskEmailId;
+        }
+        
+        //Event Site Settings
+        Map<String,fluidoconnect__Survey_Site_Settings__c> fluidoConnectSurveySiteSettingsMap = fluidoconnect__Survey_Site_Settings__c.getAll();
+        String orgBasedEventsURL = System.URL.getSalesforceBaseUrl().toExternalForm()+'/Events';
+        for(String dataSetName : fluidoConnectSurveySiteSettingsMap.keySet()){
+            fluidoconnect__Survey_Site_Settings__c thisfluidoconnectSurveySiteSetting = fluidoConnectSurveySiteSettingsMap.get(dataSetName);
+            thisfluidoconnectSurveySiteSetting.fluidoconnect__Value__c = orgBasedEventsURL;
+        }
+        
+        //Feedback notification mail id
+        Map<String,Feedback_mail_id__c> feedbackMailIdMap = Feedback_mail_id__c.getAll();
+        for(String dataSetName : feedbackMailIdMap.keySet()){
+            Feedback_mail_id__c feedbackMailId = feedbackMailIdMap.get(dataSetName);
+            feedbackMailId.Email_address__c = maskEmailId;
+        }
+        
+        //Gard Administrators
+        Map<String,Gard_Administrators__c> gardAdministratorsMap = Gard_Administrators__c.getAll();
+        for(String dataSetName : gardAdministratorsMap.keySet()){
+            Gard_Administrators__c thisGardAdministrator = gardAdministratorsMap.get(dataSetName);
+            thisGardAdministrator.Email_Address__c = maskEmailId;
+        }
+        
+        //Gard Contacts
+        Map<String,GardContacts__c> gardContactsMap = GardContacts__c.getAll();
+        for(String dataSetName : gardContactsMap.keySet()){
+            GardContacts__c gardContacts = gardContactsMap.get(dataSetName);
+            gardContacts.Email__c = maskEmailId;
+        }
+        
+        //HomeFeedbackRecipient
+        Map<String,HomeFeedbackRecipient__c> homeFeedbackRecipientMap = HomeFeedbackRecipient__c.getAll();
+        for(String dataSetName : homeFeedbackRecipientMap.keySet()){
+            HomeFeedbackRecipient__c homeFeedbackRecipient = homeFeedbackRecipientMap.get(dataSetName);
+            homeFeedbackRecipient.Email__c = maskEmailId;
+        }
+        
+        //MarketingCloudAPICall
+        Map<String,MarketingCloudAPICall__c> marketingCloudAPICallMap = MarketingCloudAPICall__c.getAll();
+        for(String dataSetName : marketingCloudAPICallMap.keySet()){
+            MarketingCloudAPICall__c marketingCloudAPICall = marketingCloudAPICallMap.get(dataSetName);
+            marketingCloudAPICall.AccessToken__c = 'XEIu3NVruBpkTp2Vu3zfYFVX';
+            marketingCloudAPICall.ClientId__c = 'vdxyd0d1buo6e1verjz54931';
+            marketingCloudAPICall.ClientSecret__c = 'BbfCY3JyghS4wFFZfjhzFuZm';
+            marketingCloudAPICall.Confirmation_TSDExternalKey__c = '12345';
+            marketingCloudAPICall.EndPoint__c = 'https://mctmc5wrs5n3j8zf35jwkj3tcn6m.auth.marketingcloudapis.com/v1/requestToken';
+			marketingCloudAPICall.EndPoint_SendEmail__c = 'https://mctmc5wrs5n3j8zf35jwkj3tcn6m.rest.marketingcloudapis.com/messaging/v1/messageDefinitionSends/';
+        }
+        
+        //MDM Config
+        MDMConfig__c mdmConfigOWD = MDMConfig__c.getOrgDefaults();
+        String mdmConfigEndpoint = mdmConfigOWD.Endpoint__c.replace('soa','soa-test').replace('gard','gard-test');//mdmConfigOWD.Endpoint__c.replace('soa.gard.no','soa-test.gard.no');
+        mdmConfigOWD.Endpoint__c = mdmConfigEndpoint;
+        mdmConfigOWD.Contact_Endpoint__c = mdmConfigEndpoint;
+        
+        //MDM Settings
+        MDM_Settings__c mdmSettingsOWD = MDM_Settings__c.getOrgDefaults();
+        mdmSettingsOWD.Web_Services_Enabled__c = false;
+        
+        //MyGard support email address
+        Map<String,MyGard_support_email_address__c> myGardSupportEmailAddressMap = MyGard_support_email_address__c.getAll();
+        for(String dataSetName : myGardSupportEmailAddressMap.keySet()){
+            MyGard_support_email_address__c myGardSupportEmailAddress = myGardSupportEmailAddressMap.get(dataSetName);
+            myGardSupportEmailAddress.Email_address__c = maskEmailId;
+        }
+        
+        //Opportunity Email Recipients
+        Opportunity_Email_Recipients__c opportunityEmailRecipientsOWD = Opportunity_Email_Recipients__c.getOrgDefaults();
+        opportunityEmailRecipientsOWD.Fleet_Assessment__c = maskEmailId+','+maskEmailId;//'ownergard@gmail.com,gardoffshore@gmail.com';
+        opportunityEmailRecipientsOWD.Management_Audit__c = maskEmailId;
+        
+        //PEMEMailtoUWR
+        Map<String,MailtoUWR__c> mailToUWRMap = MailtoUWR__c.getAll();
+        for(String dataSetName : mailToUWRMap.keySet()){
+            MailtoUWR__c mailToUWR = mailToUWRMap.get(dataSetName);
+            mailToUWR.Email__c = maskEmailId;
+        }
+        
+        //PemeContactMe
+        Map<String,PemeContactMe__c> pemeContactMeMap = PemeContactMe__c.getAll();
+        for(String dataSetName : pemeContactMeMap.keySet()){
+            PemeContactMe__c thisPemeContactMe = pemeContactMeMap.get(dataSetName);
+            thisPemeContactMe.Email__c = maskEmailId;
+        }
+        
+        //PortfolioReportsCtrl_for_Marine_endpoint
+        Map<String,PortfolioReportsCtrl_for_Marine_endpoint__c> portfolioReportsCtrlForMarineEndpointMap = PortfolioReportsCtrl_for_Marine_endpoint__c.getAll();
+        for(String dataSetName : portfolioReportsCtrlForMarineEndpointMap.keySet()){
+            PortfolioReportsCtrl_for_Marine_endpoint__c portfolioReportsCtrlForMarineEndpoint = portfolioReportsCtrlForMarineEndpointMap.get(dataSetName);
+            portfolioReportsCtrlForMarineEndpoint.Endpoint__c = 'https://gard-el-gard-test.eu.cloudhub.io/reports/soap/reportsRequest'; //updated after mule migration https://soa-test.gard.no/soa-infra/services/Reports/ReportsFetcher/ReportsService';
+        }
+        
+        //Search_webservice_endpoint
+        Map<String,Search_webservice_endpoint__c> searchWebserviceEndpointMap = Search_webservice_endpoint__c.getAll();
+        for(String dataSetName : searchWebserviceEndpointMap.keySet()){
+            Search_webservice_endpoint__c searchWebserviceEndpoint = searchWebserviceEndpointMap.get(dataSetName);
+            searchWebserviceEndpoint.Endpoint__c = 'https://soa-test.gard.no/soa-infra/services/Common/SearchGardNo/SearchRequest';
+        }
+        
+        //Trading Certificate Team
+        Map<String,trading_certificates__c> tradingCertificateTeamMap = trading_certificates__c.getAll();
+        for(String dataSetName : tradingCertificateTeamMap.keySet()){
+            trading_certificates__c tradingCertificate = tradingCertificateTeamMap.get(dataSetName);
+            tradingCertificate.value__c = maskEmailId;
+        }
+        //Settings Masking ENDS
+        
+        //Update the masked values
+        if(!Test.isRunningTest()){
+            update blueCardTeamMap.values();
+            update blueCardWebserviceEndpointMap.values();
+            update claimAdminEmailMap.values();
+            update claimTimebarWebserviceEndpointMap.values();
+            update claimWebServiceEndpointMap.values();
+            update cofrRequestEmailCSMap.values();
+            update defaultEmailsCSMap.values();
+            update commonVariablesMap.values();
+            update contractReviewDefaultClaimEmailMap.values();
+            update contractReviewWebServicesMap.values();
+            update customerFeedbackEmailRecipientOWD;
+            update customerTransactionsChartTradersMap.values();
+            update emailSettingsMap.values();
+            update feedbackMailIdMap.values();
+            update fluidoConnectSurveySiteSettingsMap.values();
+            update gardAdministratorsMap.values();
+            update gardContactsMap.values();
+            update homeFeedbackRecipientMap.values();
+            update mailToUWRMap.values();
+            update marketingCloudAPICallMap.values();
+            update mdmConfigOWD;
+            update mdmSettingsOWD;
+            update myGardSupportEmailAddressMap.values();
+            update opportunityEmailRecipientsOWD;
+            update pemeContactMeMap.values();
+            update portfolioReportsCtrlForMarineEndpointMap.values();
+            update tradingCertificateTeamMap.values();
+            update searchWebserviceEndpointMap.values();
+        }
+    }
+    
+    //Updates records from production
+    public static void runPostRefreshUpdateBatch(){
+        UtilityData utilData = new UtilityData();
+        utilData.jobName = '#account-EmailMasking#';
+        PostRefreshUpdateBatch.batchRunHandler(utilData);
+        utilData.jobName = '#case-EmailMasking#';
+        PostRefreshUpdateBatch.batchRunHandler(utilData);
+        utilData.jobName = '#contact-EmailMasking#';
+        PostRefreshUpdateBatch.batchRunHandler(utilData);
+    }
+    
+    //Later, Move below methods to PostRefreshUpdateBatch
+    
+    //removes the GCs from all the users, then, calls the createRelatedGardContacts()
+    public static void refreshGCsInUsers(){
+        List<User> users_RemoveGC = new List<User>();
+        for(User user_RemoveGC : [SELECT id,ContactId__c FROM User WHERE contactId__c != null]){
+            user_RemoveGC.contactId__c = null;
+            users_RemoveGC.add(user_RemoveGC);
+        }
+        Database.update(users_RemoveGC,false);
+        createRelatedGardContacts();
+    }    
+    
+    //create and  links GardContacts for active users
+    @future
+    public static void createRelatedGardContacts(){
+        //retreive Users' list that are to be updated
+        List<String> profileNames = new List<String>{'BVD Super Users (UWR)','BVD Super Users (Claims)','Gard Standard User (UWR)','Gard Standard User','System Administrator'};
+        String userFields = ' Title,FirstName,LastName,CommunityNickname,City,MobilePhone,Phone,Email,IsActive,ContactId__c ';
+        String userConditions = ' WHERE IsActive = true AND profile.name IN :profileNames';
+        String userQuery = 'SELECT'+userFields+'FROM User'+userConditions;
+        List<User> usersToBeLinked = Database.query(userQuery);
+        
+        //the records that will be manipualted
+        Map<Id,User> uId_Usr_Map = new Map<Id,User>(); //userId To User Map
+        Map<Id,Gard_Contacts__c> uId_GC_Map = new Map<Id,Gard_Contacts__c>(); //userId To Gard Contact Map
+            
+        //create new Gard Contacts
+        List<Gard_Contacts__c> newGCs = new List<Gard_Contacts__c>();
+        Gard_Contacts__c newGC;
+        for(User userToBeLinked : usersToBeLinked){
+            if(userToBeLinked.ContactId__c == null || userToBeLinked.ContactId__c == ''){//create only for those it doesnt exist
+                newGC = new Gard_Contacts__c(
+                    Title__c = userToBeLinked.Title,
+                    FirstName__c = userToBeLinked.FirstName,
+                    LastName__c = userToBeLinked.LastName,
+                    Nick_Name__c = userToBeLinked.CommunityNickname,
+                    Office_city__c = userToBeLinked.City,
+                    MobilePhone__c = userToBeLinked.MobilePhone,
+                    Phone__c = userToBeLinked.Phone,
+                    Email__c = userToBeLinked.Email,
+                    isActive__c = true
+                );
+                newGCs.add(newGC);
+                
+                //add GCs to maps to link back to users after insert
+                uId_Usr_Map.put(userToBeLinked.id,userToBeLinked);
+                uId_GC_Map.put(userToBeLinked.id,newGC);
+            }
+        }
+        
+        //perform DMLS
+        try{
+            //insert GCs
+            System.debug('About to Insert GardContacts');
+            insert newGCs;
+            System.debug('GardContacts Insert Successful - '+newGCs.size());
+            
+            //update Users, i.e. link them with respective GCs
+            System.debug('About to Update GardContacts');
+            User tempUser;
+            Gard_Contacts__c tempGC;
+            for(Id userId : uId_Usr_Map.keySet()){
+                tempUser = uId_Usr_Map.get(userId); 
+                tempGC = uId_GC_Map.get(userId);
+                tempUser.ContactId__c = tempGC.id;
+            }
+            update uId_Usr_Map.values();
+            System.debug('GardContacts Updated Successful - '+uId_Usr_Map.values().size());
+            
+        }catch(Exception genericException){
+            System.debug('GardContacts Insert failed\n Exception Occurred - '+genericException);
+        }
+    }
+    
+    //Masks prod Email Ids in Gard Contacts
+    public static void updateGardContactsEmails(){
+        List<Gard_Contacts__c> grdContactLst1stBatch = new List<Gard_Contacts__c>();
+        Integer i = 0;
+        for(Gard_Contacts__c grdContactIns : [SELECT Email__c FROM Gard_Contacts__c]){
+            if(grdContactIns.Email__c != null || grdContactIns.Email__c != ''){
+                if(grdContactIns.Email__c != null)grdContactIns.Email__c = maskEmailId;//'example'+grdContactIns.Email__c;
+                grdContactLst1stBatch.add(grdContactIns);
+                i++;
+                if(i == 10000)
+                    break;
+            }
+        }
+        if(!Test.isRunningTest() && grdContactLst1stBatch.size() > 0)
+            update grdContactLst1stBatch;
+    }
+}

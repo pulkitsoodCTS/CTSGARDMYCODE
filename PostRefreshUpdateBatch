@@ -1,0 +1,92 @@
+//V3 : General Batch for different objects' manipulation
+//Documentation at the EndOfPage
+global class PostRefreshUpdateBatch implements Database.Batchable<SObject>,Database.stateful{
+    private UtilityData utilData;
+    private String queryString;
+    
+    //controller method to run batch/es
+    //gets the all the required queryStrings, then run a batch for each of the queryString
+    public static Boolean batchRunHandler(UtilityData utilData){
+        List<PostRefreshUpdateBatch> prubs;
+        PostRefreshUpdateBatch prub;
+        List<String> queryStrings;
+        if(utilData.isValid()){
+            queryStrings = PostRefreshUpdatesBatchHelper.getQueryStrings(utilData);
+            for(String queryString : queryStrings){
+                prub = new PostRefreshUpdateBatch();
+                prub.utilData = utilData;
+                prub.queryString = queryString;
+                Database.executeBatch(prub,prub.utilData.batchSize);
+            }
+			return true;
+        }else{
+            return false;
+        }
+    }
+    
+    //Batch Methods START
+    public Database.QueryLocator start(Database.BatchableContext bc){
+        return Database.getQueryLocator(queryString);
+    }
+    
+    //public void execute(Database.BatchableContext bc,List<Case> casesToBeUpdated){
+    public void execute(Database.BatchableContext bc,List<SObject> inputRecords){
+        
+        if(utilData.jobName.containsIgnoreCase('#account-')){//Account
+            List<Account> inputAccounts = PostRefreshUpdatesBatchHelper.sObjectsToAccounts(inputRecords);
+            if(utilData.jobName.containsIgnoreCase('#account-emailMasking#')) PostRefreshUpdatesBatchHelper.maskAccountEmails(inputAccounts,utilData);//Email Masking
+        }else if(utilData.jobName.containsIgnoreCase('#case-')){//Case
+            List<Case> inputCases = PostRefreshUpdatesBatchHelper.sObjectsToCases(inputRecords);
+            if(utilData.jobName.containsIgnoreCase('#case-emailMasking#')) PostRefreshUpdatesBatchHelper.maskCaseEmails(inputCases,utilData);//Email Masking
+        }else if(utilData.jobName.containsIgnoreCase('#contact-')){//Contact
+            List<Contact> inputContacts = PostRefreshUpdatesBatchHelper.sObjectsToContacts(inputRecords);
+            if(utilData.jobName.containsIgnoreCase('#contact-emailMasking#')) PostRefreshUpdatesBatchHelper.maskContactEmails(inputContacts,utilData);//Email Masking
+        }
+    }
+    
+    public void finish(Database.BatchableContext bc){}
+    //Batch Methods END
+    
+    /*        
+	Documentation : PostRefreshUpdateBatch
+
+    To run this batch following is the code:
+		Code line : 
+        ->UtilityData utilData = new UtilityData();
+			Jobs :
+				Account email masking : 
+					pre-Batch-Run steps : 
+						--deActivate validation rules OR off the CS : "Data Quality Settings"-Enable Validation
+					Code lines : 
+                    	->utilData.targetSObjectApiName = 'Account';
+                    	->utilData.jobName = 'maskEmail';
+                Contact email masking : 
+					pre-Batch-Run steps : 
+						--deActivate validation rules OR off the CS : "Data Quality Settings"-Enable Validation
+						--deactivate the Duplicate Rules : All Rules of Contacts
+						--deactivate the Trigger : "EditCorrespondentContactSubscriptionFields"
+					Code lines : 
+                    	->utilData.targetSObjectApiName = 'Contact';
+                    	->utilData.jobName = 'maskEmail';
+                Case email masking : 
+					pre-Batch-Run steps : 
+						--mark case custom field's filter optional - "Broker Account" field's Filter Criteria
+						--deactivate Process Builder's - "myGard_Create_new_user"
+					Code lines : 
+                    	->utilData.targetSObjectApiName = 'case';
+                    	->utilData.jobName = 'maskEmail';
+		Code line : 		
+        ->PostRefreshUpdateBatch.batchRunHandler(UtilityData utilData);
+    
+	To Verify Data Update Queries:
+		--Account : SELECT Id,Email__c,Corporate_email__c,Email_1__c,Email_Address_2__c,E_Mail_Address_3__c,Initial_Submitter__c FROM Account WHERE ((Email__c != NULL AND Email__c != 'defaultMaskingEmail@example.com') OR (Corporate_email__c != NULL AND Corporate_email__c != 'defaultMaskingEmail@example.com') OR (Email_1__c != NULL AND Email_1__c != 'defaultMaskingEmail@example.com') OR (Email_Address_2__c != NULL AND Email_Address_2__c != 'defaultMaskingEmail@example.com') OR (E_Mail_Address_3__c != NULL AND E_Mail_Address_3__c != 'defaultMaskingEmail@example.com') OR (Initial_Submitter__c != NULL AND Initial_Submitter__c != 'defaultMaskingEmail@example.com'))
+		--CaseEmailMasking : SELECT Id,suppliedEmail,Claim_Submitter_Email__c,Email_UwForm__c,Email_address__c,E_mail_address1__c,E_mail_address__c,Email_address_MRF__c FROM Case WHERE RecordType.name != 'Claim' AND ((suppliedEmail != NULL AND suppliedEmail != 'defaultmaskingemail@example.com') OR (Claim_Submitter_Email__c != NULL AND Claim_Submitter_Email__c != 'defaultmaskingemail@example.com') OR (Email_UwForm__c != NULL AND Email_UwForm__c != 'defaultmaskingemail@example.com') OR (Email_address__c != NULL AND Email_address__c != 'defaultmaskingemail@example.com') OR (E_mail_address1__c != NULL AND E_mail_address1__c != '') OR (E_mail_address__c != NULL AND E_mail_address__c != 'defaultmaskingemail@example.com') OR (Email_address_MRF__c != NULL AND Email_address_MRF__c != 'defaultmaskingemail@example.com'))
+		--ContactEmailMasking : SELECT Id, Email,Email_1__c,Email_2__c,Email_3__c,Email_4__c,Email_5__c FROM Contact WHERE (Email != Null AND Email != 'defaultmaskingemail@example.com') OR (Email_1__c != Null AND Email_1__c != 'defaultmaskingemail@example.com') OR (Email_2__c != Null AND Email_2__c != 'defaultmaskingemail@example.com') OR (Email_3__c != Null AND Email_3__c != 'defaultmaskingemail@example.com') OR (Email_4__c != Null AND Email_4__c != 'defaultmaskingemail@example.com') OR (Email_5__c != Null AND Email_5__c != 'defaultmaskingemail@example.com')
+
+	
+
+	FUTURE updates:
+	1.) reFactor to update all the records at once create a single string with keywords, e.g. assigning jobName = "accountContactCaseEmailMasking"; executes three different batches
+		with one command, but jobName = "contactEmailMasking"; runs one batch only
+	*/
+}
