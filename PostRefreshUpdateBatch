@@ -1,28 +1,14 @@
-//V3 : General Batch for different objects' manipulation
+//V4 : General Batch for different objects' manipulation
 //Documentation at the EndOfPage
 global class PostRefreshUpdateBatch implements Database.Batchable<SObject>,Database.stateful{
     private UtilityData utilData;
     private String queryString;
-    
-    //controller method to run batch/es
-    //gets the all the required queryStrings, then run a batch for each of the queryString
-    public static Boolean batchRunHandler(UtilityData utilData){
-        List<PostRefreshUpdateBatch> prubs;
-        PostRefreshUpdateBatch prub;
-        List<String> queryStrings;
-        if(utilData.isValid()){
-            queryStrings = PostRefreshUpdatesBatchHelper.getQueryStrings(utilData);
-            for(String queryString : queryStrings){
-                prub = new PostRefreshUpdateBatch();
-                prub.utilData = utilData;
-                prub.queryString = queryString;
-                Database.executeBatch(prub,prub.utilData.batchSize);
-            }
-			return true;
-        }else{
-            return false;
-        }
+   
+    public PostRefreshUpdateBatch(UtilityData utilData){
+        this.utilData = utilData;
+        this.queryString = PostRefreshUpdatesBatchHelper.getQueryStrings(utilData.sObjectName,utilData.service);
     }
+    
     
     //Batch Methods START
     public Database.QueryLocator start(Database.BatchableContext bc){
@@ -32,15 +18,21 @@ global class PostRefreshUpdateBatch implements Database.Batchable<SObject>,Datab
     //public void execute(Database.BatchableContext bc,List<Case> casesToBeUpdated){
     public void execute(Database.BatchableContext bc,List<SObject> inputRecords){
         
-        if(utilData.jobName.containsIgnoreCase('#account-')){//Account
+        if(utilData.sObjectName.equalsIgnoreCase('account')){//Account
             List<Account> inputAccounts = PostRefreshUpdatesBatchHelper.sObjectsToAccounts(inputRecords);
-            if(utilData.jobName.containsIgnoreCase('#account-emailMasking#')) PostRefreshUpdatesBatchHelper.maskAccountEmails(inputAccounts,utilData);//Email Masking
-        }else if(utilData.jobName.containsIgnoreCase('#case-')){//Case
+            if(utilData.service.equalsIgnoreCase('emailMasking')) PostRefreshUpdatesBatchHelper.maskAccountEmails(inputAccounts,utilData);//Email Masking
+        }else if(utilData.sObjectName.equalsIgnoreCase('case')){//Case
             List<Case> inputCases = PostRefreshUpdatesBatchHelper.sObjectsToCases(inputRecords);
-            if(utilData.jobName.containsIgnoreCase('#case-emailMasking#')) PostRefreshUpdatesBatchHelper.maskCaseEmails(inputCases,utilData);//Email Masking
-        }else if(utilData.jobName.containsIgnoreCase('#contact-')){//Contact
+            if(utilData.service.equalsIgnoreCase('emailMasking')) PostRefreshUpdatesBatchHelper.maskCaseEmails(inputCases,utilData);//Email Masking
+        }else if(utilData.sObjectName.equalsIgnoreCase('contact')){//Contact
             List<Contact> inputContacts = PostRefreshUpdatesBatchHelper.sObjectsToContacts(inputRecords);
-            if(utilData.jobName.containsIgnoreCase('#contact-emailMasking#')) PostRefreshUpdatesBatchHelper.maskContactEmails(inputContacts,utilData);//Email Masking
+            if(utilData.service.equalsIgnoreCase('emailMasking')) PostRefreshUpdatesBatchHelper.maskContactEmails(inputContacts,utilData);//Email Masking
+        }else if(utilData.sObjectName.equalsIgnoreCase('Gard_Contacts__c')){//Gard_Contacts__c
+            List<Gard_Contacts__c> inputGardContacts = PostRefreshUpdatesBatchHelper.sObjectsToGardContacts(inputRecords);
+            if(utilData.service.equalsIgnoreCase('emailMasking')) PostRefreshUpdatesBatchHelper.maskGardContactsEmails(inputGardContacts,utilData);//Email Masking
+        }else if(utilData.sObjectName.equalsIgnoreCase('Gard_Team__c')){//Gard_Team__c
+            List<Gard_Team__c> inputGardTeams = PostRefreshUpdatesBatchHelper.sObjectsToGardTeam(inputRecords);
+            if(utilData.service.equalsIgnoreCase('emailMasking')) PostRefreshUpdatesBatchHelper.maskGardTeamEmails(inputGardTeams,utilData);//Email Masking
         }
     }
     
