@@ -1,4 +1,4 @@
-public class PostRefreshUpdateBatchHelper{
+public class PostRefreshUpdatesBatchHelper{
     //Process-Helper Methods START
     public static void maskAccountEmails(List<Account> inputAccounts,UtilityData utilData){
         List<Account> modifiedAccounts = new List<Account>();
@@ -87,18 +87,49 @@ public class PostRefreshUpdateBatchHelper{
             modifiedContacts.add(inputContact);
         }
         
-        if(!modifiedContacts.isEmpty()) Database.update(modifiedContacts,false);//update modifiedContacts;
+        if(!modifiedContacts.isEmpty()) update modifiedContacts;//Database.update(modifiedContacts,false);//
     }
+    
+    public static void maskGardContactsEmails(List<Gard_Contacts__c> inputGardContacts,UtilityData utilData){
+        List<Gard_Contacts__c> modifiedGardContacts = new List<Gard_Contacts__c>();
+        for(Gard_Contacts__c inputGardContact : inputGardContacts){
+            
+            if(!String.isEmpty(inputGardContact.Email__c)){
+                inputGardContact.Email__c = utilData.maskEmailId;
+            }
+            
+            modifiedGardContacts.add(inputGardContact);
+        }
+        
+        if(!modifiedGardContacts.isEmpty()) update modifiedGardContacts;//Database.update(modifiedGardContacts,false);//
+    }
+    
+    public static void maskGardTeamEmails(List<Gard_Team__c> inputGardTeams,UtilityData utilData){
+        List<Gard_Team__c> modifiedGardTeams = new List<Gard_Team__c>();
+        for(Gard_Team__c inputGardTeam : inputGardTeams){
+            
+            if(!String.isEmpty(inputGardTeam.P_I_email__c)){
+                inputGardTeam.P_I_email__c = utilData.maskEmailId;
+            }
+            if(!String.isEmpty(inputGardTeam.Marine_Email__c)){
+                inputGardTeam.Marine_Email__c = utilData.maskEmailId;
+            }            
+            
+            modifiedGardTeams.add(inputGardTeam);
+        }
+        
+        if(!modifiedGardTeams.isEmpty()) update modifiedGardTeams;//Database.update(modifiedGardTeams,false);//
+    }
+    
     //Process-Helper Methods END
     
-    //Creates and returns queryString/s for all jobTypes
-    public static List<String> getQueryStrings(UtilityData utilData){
+    //Creates and returns queryString for all jobTypes
+    public static String getQueryStrings(String sObjectName,String service){
         String queryString;
-        List<String> queryStrings = new List<String>();
+        //List<String> queryStrings = new List<String>();
         
-        //if(utilData.targetSObjectApiName.equalsIgnoreCase('account') && (utilData.jobName.containsIgnoreCase('mask') && utilData.jobName.containsIgnoreCase('email'))){
-        if(utilData.jobName.containsIgnoreCase('#account-emailMasking#')){
-            queryString = 'SELECT'
+        if(sObjectName.equalsIgnoreCase('account') && service.equalsIgnoreCase('emailMasking')){
+                queryString = 'SELECT'
                 +' Id,Email__c,Corporate_email__c,Email_1__c,Email_Address_2__c,E_Mail_Address_3__c,Initial_Submitter__c'
                 +' FROM Account'
                 +' WHERE Email__c != NULL'
@@ -107,8 +138,8 @@ public class PostRefreshUpdateBatchHelper{
                 +' OR Email_Address_2__c != NULL'
                 +' OR E_Mail_Address_3__c != NULL'
                 +' OR Initial_Submitter__c != NULL';
-            queryStrings.add(queryString);
-        }else if(utilData.jobName.containsIgnoreCase('#case-emailMasking#')){
+            //queryStrings.add(queryString);
+        }else if(sObjectName.equalsIgnoreCase('case') && service.equalsIgnoreCase('emailMasking')){
             Schema.DescribeSObjectResult dSOR = Case.SObjectType.getDescribe();
             Id claimRecordTypeId = dSOR.getRecordTypeInfosByDeveloperName().get('Claim').getRecordTypeId();
             queryString = 'SELECT'
@@ -122,8 +153,8 @@ public class PostRefreshUpdateBatchHelper{
                 +' OR E_mail_address1__c != NULL'
                 +' OR E_mail_address__c != NULL'
                 +' OR Email_address_MRF__c != NULL)';
-            queryStrings.add(queryString);
-        }else if(utilData.jobName.containsIgnoreCase('#contact-emailMasking#')){
+            //queryStrings.add(queryString);
+        }else if(sObjectName.equalsIgnoreCase('contact') && service.equalsIgnoreCase('emailMasking')){
             queryString = 'SELECT'
                 +' Id, Email,Email_1__c,Email_2__c,Email_3__c,Email_4__c,Email_5__c'
                 +' FROM Contact'
@@ -133,9 +164,20 @@ public class PostRefreshUpdateBatchHelper{
                 +' OR Email_3__c != Null'
                 +' OR Email_4__c != Null'
                 +' OR Email_5__c != Null';
-            queryStrings.add(queryString);
+            //queryStrings.add(queryString);
+        }else if(sObjectName.equalsIgnoreCase('Gard_Contacts__c') && service.equalsIgnoreCase('emailMasking')){
+            queryString = 'SELECT'
+                +' Id, Email__c'
+                +' FROM Gard_Contacts__c'
+                +' WHERE Email__c != Null';
+        }else if(sObjectName.equalsIgnoreCase('Gard_Team__c') && service.equalsIgnoreCase('emailMasking')){
+            queryString = 'SELECT'
+                +' Id,P_I_email__c,Marine_Email__c'
+                +' FROM Gard_Team__c'
+                +' WHERE P_I_email__c != Null'
+                +' OR Marine_Email__c != Null';
         }
-        return queryStrings;
+        return queryString;
     }
     
     //Conversion-Helper methods START
@@ -146,13 +188,6 @@ public class PostRefreshUpdateBatchHelper{
         }
         return retAccounts;
     }
-    public static List<Contact> sObjectsToContacts(List<SObject> inputRecords){
-        List<Contact> retContacts = new List<Contact>();
-        for(sObject inputRecord : inputRecords){
-            retContacts.add((Contact) inputRecord);
-        }
-        return retContacts;
-    }
     
     public static List<Case> sObjectsToCases(List<Case> inputRecords){
         List<Case> retCases = new List<Case>();
@@ -161,5 +196,30 @@ public class PostRefreshUpdateBatchHelper{
         }
         return retCases;
     }
+    
+    public static List<Contact> sObjectsToContacts(List<SObject> inputRecords){
+        List<Contact> retContacts = new List<Contact>();
+        for(sObject inputRecord : inputRecords){
+            retContacts.add((Contact) inputRecord);
+        }
+        return retContacts;
+    }
+    
+    public static List<Gard_Contacts__c> sObjectsToGardContacts(List<SObject> inputRecords){
+        List<Gard_Contacts__c> retContacts = new List<Gard_Contacts__c>();
+        for(sObject inputRecord : inputRecords){
+            retContacts.add((Gard_Contacts__c) inputRecord);
+        }
+        return retContacts;
+    }
+    
+    public static List<Gard_Team__c> sObjectsToGardTeam(List<SObject> inputRecords){
+        List<Gard_Team__c> retGardTeams = new List<Gard_Team__c>();
+        for(sObject inputRecord : inputRecords){
+            retGardTeams.add((Gard_Team__c) inputRecord);
+        }
+        return retGardTeams;
+    }
+    
     //Conversion-Helper methods START
 }
