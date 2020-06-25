@@ -1,13 +1,22 @@
 public class UtilityData{
     //Job Identifiers
-    public String jobName;//caseInsensitive; format - "#sObjectApiName-jobDescription", e.g. #Account-EmailMasking or #object__c-FlagMasking
+    public String sObjectName;
+    public String service;
     
     //Job-specific fields
     public String maskEmailId;
     public Integer batchSize;
     
     //Default fields
-    private String defaultMaskEmailId = 'defaultMaskingEmail@example.com';
+    private static final Map<String,List<String>> sObjectToServicesMap = new Map<String,List<String>>{
+        'account' => new List<String>{'emailmasking'},
+        'case' => new List<String>{'emailmasking'},
+        'contact' => new List<String>{'emailmasking'},
+        'gard_contacts__c' => new List<String>{'emailmasking'},
+        'gard_team__c' => new List<String>{'emailmasking'}
+    };
+    private static final String defaultMaskEmailId = 'defaultMaskingEmail@example.com';
+    
     
     //Constructor to initialize with default values - prevents null exception
     public UtilityData(){
@@ -17,16 +26,6 @@ public class UtilityData{
     
     //if atleast minimal data is given to run a Job
     public Boolean isValid(){
-        String validRegEx = '([\\s]*#[a-zA-Z0-9]+(_[a-zA-Z0-9]+)*(__[cC])?-[a-zA-Z]+#[\\s]*)+';
-        Pattern validJobNamePattern = Pattern.compile(validRegEx);
-        Matcher jobNameMatcher = validJobNamePattern.matcher(jobName);
-        return jobNameMatcher.matches();
+        return sObjectToServicesMap.get(this.sObjectName.toLowerCase()).contains(this.service.toLowerCase());
     }
-    
-    /* Documentation : UtilityData
-    Valid jobNames(caseInsensitive):
-		- #account-emailMasking#
-		- #contact-emailMasking#
-		- #case-emailMasking#
-    */
 }
