@@ -1,125 +1,11 @@
+//V7 : PostRefreshUpdateBatch FrameWork updated with Gard_Contacts__c and Gard_Team__c
 //V6 : PostRefreshUpdateBatch FrameWork included. Classes : PostRefreshUpdateBatch, PostRefreshUpdateBatchHelper and UtilityData
 //V5 : minor changes regarding new values of email and endpoints
 //V4 : updateGardTeamsEmails() and refreshGCsInUsers() added
 //V3 : createRelatedGardContacts added
 public without sharing Class AutomatePostRefreshSteps{
     //public static variables
-    public static String maskEmailId = 'defaultMaskingEmail@example.com';//'ownergard@gmail.com';
-    
-    /*See PostRefreshUpdateBatch
-    //Masks production Email Ids in Contacts
-    public static void updateContactEmails(){
-        List<Contact> contactLst1stBatch = new List<Contact>();
-        List<Contact> contactLst2ndBatch = new List<Contact>();
-        List<Contact> contactLst3rdBatch = new List<Contact>();
-        List<Contact> contactLst4thBatch = new List<Contact>();
-        Integer i = 0;
-        for(Contact contactIns : [Select id, Email,Email_1__c,Email_2__c,Email_3__c,Email_4__c,Email_5__c FROM Contact]){
-            if(contactIns.Email != null || contactIns.Email != '')
-                contactIns.Email = 'example'+contactIns.Email;
-            if(contactIns.Email_1__c != null || contactIns.Email_1__c != '')
-                contactIns.Email_1__c = 'example'+contactIns.Email_1__c;
-            if(contactIns.Email_2__c != null || contactIns.Email_2__c != '')
-                contactIns.Email_2__c = 'example'+contactIns.Email_2__c;
-            if(contactIns.Email_3__c != null || contactIns.Email_3__c != '')
-                contactIns.Email_3__c = 'example'+contactIns.Email_3__c;
-            if(contactIns.Email_4__c != null || contactIns.Email_4__c != '')
-                contactIns.Email_4__c = 'example'+contactIns.Email_4__c;
-            if(contactIns.Email_5__c != null || contactIns.Email_5__c != '')
-                contactIns.Email_5__c = 'example'+contactIns.Email_5__c;
-            if(i<10000)
-                contactLst1stBatch.add(contactIns);
-            if(i> = 10000 && i<20000)
-                contactLst2ndBatch.add(contactIns);
-            if(i> = 20000 && i<30000)
-                contactLst3rdBatch.add(contactIns);
-            if(i> = 30000 && i<40000)
-                contactLst4thBatch.add(contactIns);
-        }
-        if(!Test.isRunningTest()){
-            if(contactLst1stBatch.size() > 0)
-                update contactLst1stBatch;
-            if(contactLst2ndBatch.size() > 0)
-                update contactLst2ndBatch;
-            if(contactLst3rdBatch.size() > 0)
-                update contactLst3rdBatch;
-            if(contactLst4thBatch.size() > 0)
-                update contactLst4thBatch;
-        }
-        contactLst1stBatch.clear();
-        contactLst2ndBatch.clear();
-        contactLst3rdBatch.clear();
-        contactLst4thBatch.clear();
-    }
-    */
-    
-    //Masks production emails in Account
-    /*See PostRefreshUpdateBatch
-    public static void updateAccountEmails(){
-        List<Account> accountLst1stBatch = new List<Account>();
-        List<Account> accountLst2ndBatch = new List<Account>();
-        List<Account> accountLst3rdBatch = new List<Account>();
-        Integer i = 0;
-        for(Account accountIns : [Select id, Email_1__c,Email_Address_2__c FROM Account]){
-            if(accountIns.Email_Address_2__c != null || accountIns.Email_Address_2__c != '')
-                accountIns.Email_Address_2__c = 'example'+accountIns.Email_Address_2__c;
-            if(accountIns.Email_1__c != null || accountIns.Email_1__c != '')
-                accountIns.Email_1__c = 'example'+accountIns.Email_1__c;
-            
-            if(i < 10000) accountLst1stBatch.add(accountIns);
-            else if(i < 20000) accountLst2ndBatch.add(accountIns);
-            else if(i < 30000) accountLst3rdBatch.add(accountIns);
-        }
-        if(!Test.isRunningTest()){
-            if(accountLst1stBatch.size() > 0)
-                update accountLst1stBatch;
-            if(accountLst2ndBatch.size() > 0)
-                update accountLst2ndBatch;
-            if(accountLst3rdBatch.size() > 0)
-                update accountLst3rdBatch;   
-        }
-    }
-    */    
-	//Updates gardTeam emails
-    public static void updateGardTeamsEmails(){
-        List<Gard_Team__c> grdTeamsToBeMasked = new List<Gard_Team__c>();
-        Integer i = 0;
-        for(Gard_Team__c grdTeamIns : [SELECT id,P_I_email__c,Marine_Email__c FROM Gard_Team__c]){
-                if(grdTeamIns.P_I_email__c != null)grdTeamIns.P_I_email__c = maskEmailId;//'example-'+grdTeamIns.P_I_email__c;
-				if(grdTeamIns.Marine_Email__c != null)grdTeamIns.Marine_Email__c = maskEmailId;//'example-'+grdTeamIns.Marine_Email__c;
-                grdTeamsToBeMasked.add(grdTeamIns);
-                i++;
-                if(i == 10000) break;
-        }
-        if(!Test.isRunningTest() && grdTeamsToBeMasked.size() > 0)
-            update grdTeamsToBeMasked;
-    }
-	/*See PostRefreshUpdateBatch
-    //Update all case emails which don't have claim record type
-    public static void updateCaseEmails(){
-        List<RecordType> recordTypeLst;
-        List<Case> caseLst1stBatch = new List<Case>();
-        String claimRecordTypeId;
-        Integer i = 0;
-        
-        recordTypeLst = [SELECT Id FROM RecordType WHERE Name = 'claim'];
-        if(recordTypeLst != null && recordTypeLst.size() >0)
-            claimRecordTypeId = recordTypeLst[0].id;
-        
-        for(Case caseIns : [SELECT suppliedEmail,Claim_Submitter_Email__c FROM Case WHERE RecordTypeId !=: claimRecordTypeId]){
-            if(caseIns.suppliedEmail != null || caseIns.suppliedEmail != '')
-                caseIns.suppliedEmail = 'example'+caseIns.suppliedEmail;
-            if(caseIns.Claim_Submitter_Email__c != null || caseIns.Claim_Submitter_Email__c != '')
-                caseIns.Claim_Submitter_Email__c = 'example'+caseIns.Claim_Submitter_Email__c;
-            caseLst1stBatch.add(caseIns); 
-            i++;
-            if(i == 10000) 
-                break;
-        }
-        if(!Test.isRunningTest() && caseLst1stBatch.size() > 0)
-            update caseLst1stBatch;
-    }
-    */
+    public static String maskEmailId = 'defaultMaskingEmail2@example.com';//'ownergard@gmail.com';
     
     //For every Queue where there is exits a Queue email address, it replaces the email address
     public static void updateQueueEmails(){
@@ -209,7 +95,7 @@ public without sharing Class AutomatePostRefreshSteps{
         Map<String,Customer_Transactions_Chart_Traders__c> customerTransactionsChartTradersMap = Customer_Transactions_Chart_Traders__c.getAll();
         for(String dataSetName : customerTransactionsChartTradersMap.keySet()){
             Customer_Transactions_Chart_Traders__c customerTransactionsChartTraders = customerTransactionsChartTradersMap.get(dataSetName);
-            customerTransactionsChartTraders.Charters_Charterers_and_Traders_Email__c = '';            
+            customerTransactionsChartTraders.Charters_Charterers_and_Traders_Email__c = maskEmailId;            
         }
         
         //Default Emails Ids
@@ -324,6 +210,13 @@ public without sharing Class AutomatePostRefreshSteps{
             portfolioReportsCtrlForMarineEndpoint.Endpoint__c = 'https://gard-el-gard-test.eu.cloudhub.io/reports/soap/reportsRequest'; //updated after mule migration https://soa-test.gard.no/soa-infra/services/Reports/ReportsFetcher/ReportsService';
         }
         
+        //QueueInEmail
+        Map<String,QueueInEmail__c> queueInEmailMap = QueueInEmail__c.getAll();
+        for(String dataSetName : queueInEmailMap.keySet()){
+            QueueInEmail__c queueInEmail = queueInEmailMap.get(dataSetName);
+            queueInEmail.Email__c = maskEmailId;
+        }
+        
         //Search_webservice_endpoint
         Map<String,Search_webservice_endpoint__c> searchWebserviceEndpointMap = Search_webservice_endpoint__c.getAll();
         for(String dataSetName : searchWebserviceEndpointMap.keySet()){
@@ -367,24 +260,45 @@ public without sharing Class AutomatePostRefreshSteps{
             update opportunityEmailRecipientsOWD;
             update pemeContactMeMap.values();
             update portfolioReportsCtrlForMarineEndpointMap.values();
+            update queueInEmailMap.values();
             update tradingCertificateTeamMap.values();
             update searchWebserviceEndpointMap.values();
         }
     }
     
     //Updates records from production
+    //NOTE : pre-requisite to running this method, deActivate:
+    //--- Account and Contact : all Validation
+    //--- All Duplicate Rules
+    //--- Contact Trigger : EditCorrespondentContactSubscriptionFields
     public static void runPostRefreshUpdateBatch(){
-        UtilityData utilData = new UtilityData();
-        utilData.jobName = '#account-EmailMasking#';
-        PostRefreshUpdateBatch.batchRunHandler(utilData);
-        utilData.jobName = '#case-EmailMasking#';
-        PostRefreshUpdateBatch.batchRunHandler(utilData);
-        utilData.jobName = '#contact-EmailMasking#';
-        PostRefreshUpdateBatch.batchRunHandler(utilData);
+        UtilityData accountUtilData = new UtilityData();
+        accountUtilData.sObjectName = 'account';
+        accountUtilData.service = 'emailMasking';
+        Database.executeBatch(new PostRefreshUpdateBatch(accountUtilData),accountUtilData.batchSize); //PostRefreshUpdateBatch.batchRunHandler(utilData);
+        
+        UtilityData caseUtilData = new UtilityData();
+        caseUtilData.sObjectName = 'case';
+        caseUtilData.service = 'emailMasking';
+        Database.executeBatch(new PostRefreshUpdateBatch(caseUtilData),caseUtilData.batchSize); //PostRefreshUpdateBatch.batchRunHandler(utilData);
+        
+        UtilityData contactUtilData = new UtilityData();
+        contactUtilData.sObjectName = 'contact';
+        contactUtilData.service = 'emailMasking';
+        Database.executeBatch(new PostRefreshUpdateBatch(contactUtilData),contactUtilData.batchSize);
+        
+        UtilityData gardContactsUtilData = new UtilityData();
+        gardContactsUtilData.sObjectName = 'Gard_Contacts__c';
+        gardContactsUtilData.service = 'emailMasking';
+        Database.executeBatch(new PostRefreshUpdateBatch(gardContactsUtilData),gardContactsUtilData.batchSize);
+        
+        UtilityData gardTeamUtilData = new UtilityData();
+        gardTeamUtilData.sObjectName = 'Gard_Team__c';
+        gardTeamUtilData.service = 'emailMasking';
+        Database.executeBatch(new PostRefreshUpdateBatch(gardTeamUtilData),gardTeamUtilData.batchSize);
     }
     
     //Later, Move below methods to PostRefreshUpdateBatch
-    
     //removes the GCs from all the users, then, calls the createRelatedGardContacts()
     public static void refreshGCsInUsers(){
         List<User> users_RemoveGC = new List<User>();
@@ -394,7 +308,7 @@ public without sharing Class AutomatePostRefreshSteps{
         }
         Database.update(users_RemoveGC,false);
         createRelatedGardContacts();
-    }    
+    }
     
     //create and  links GardContacts for active users
     @future
@@ -456,22 +370,5 @@ public without sharing Class AutomatePostRefreshSteps{
         }catch(Exception genericException){
             System.debug('GardContacts Insert failed\n Exception Occurred - '+genericException);
         }
-    }
-    
-    //Masks prod Email Ids in Gard Contacts
-    public static void updateGardContactsEmails(){
-        List<Gard_Contacts__c> grdContactLst1stBatch = new List<Gard_Contacts__c>();
-        Integer i = 0;
-        for(Gard_Contacts__c grdContactIns : [SELECT Email__c FROM Gard_Contacts__c]){
-            if(grdContactIns.Email__c != null || grdContactIns.Email__c != ''){
-                if(grdContactIns.Email__c != null)grdContactIns.Email__c = maskEmailId;//'example'+grdContactIns.Email__c;
-                grdContactLst1stBatch.add(grdContactIns);
-                i++;
-                if(i == 10000)
-                    break;
-            }
-        }
-        if(!Test.isRunningTest() && grdContactLst1stBatch.size() > 0)
-            update grdContactLst1stBatch;
     }
 }
